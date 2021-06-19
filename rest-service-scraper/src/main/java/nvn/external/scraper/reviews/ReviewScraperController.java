@@ -92,9 +92,7 @@ public class ReviewScraperController {
 	private List<Review> getCriteriaReview(int countPages, ReviewsCriteria funcCriteria) {
 		List<Review> listAllReviews = new ArrayList<>();
 		for (int pageNo = 1; pageNo <= countPages; pageNo++) {
-			//String url = String.format(SOURCE_URL, pageNo);
 			try {
-				//Document doc = Jsoup.connect(url).get();
 				Document doc = docReader.getDocument(pageNo);
 				if (null == doc) {
 					continue;
