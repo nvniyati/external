@@ -42,6 +42,18 @@ public class Review {
 	}
 	
 	@Override
+	public boolean equals(Object obj) {
+		if (null == obj)
+			return false;
+		return this.toString().equals(obj.toString());
+	}
+	
+	@Override
+	public int hashCode() {
+		return toString().hashCode();
+	}
+	
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(200);
 		sb.append("Reviewer:");

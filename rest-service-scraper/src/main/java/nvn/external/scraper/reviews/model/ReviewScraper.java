@@ -12,7 +12,7 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /**
  * Scraper to extract overly rated reviews.
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
  *
  */
 
-@Component
+@Service
 public class ReviewScraper {
 	@Value("${review.class.entry}")
 	private String REVIEW_ENTRY_CLASS;
@@ -54,13 +54,16 @@ public class ReviewScraper {
 	private Document htmlDocument;
 
 	// Functional Programming using lambda
-	Predicate<Review> isStar5Rater = r -> r.getWeight5Star() < 5;
-	ReviewsCriteria overlyPositive = () -> getOverlyPositiveReviews();
-	ReviewsCriteria offensive = () -> getOffensiveReviews();
+	private Predicate<Review> isStar5Rater = r -> r.getWeight5Star() < 5;
+	private ReviewsCriteria overlyPositive = () -> getOverlyPositiveReviews();
+	private ReviewsCriteria offensive = () -> getOffensiveReviews();
 	
 	// Comparators
-	Comparator<Review> byRating = Comparator.comparing(Review::getWeight5Star);
+	public Comparator<Review> byRating = Comparator.comparing(Review::getWeight5Star);
 	
+	public ReviewScraper() {
+		
+	}
 	public List<Review> getOverlyPositiveReviews() {
 		List<Review> reviews = new ArrayList<>();
 		if (null == this.htmlDocument) {
