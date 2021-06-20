@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import nvn.external.scraper.exceptions.ResourceNotFoundException;
+
 /**
  * Scraper to extract overly rated reviews.
  * Def: Overly rated: Overly rating= 5 stars, positive rating
@@ -81,12 +83,10 @@ public class ReviewScraper {
 
 				Element elmRatingTable = element.get(0);
 				if (null != elmRatingTable) {
-					logger.debug("Count 5 star ratings from Rating Table");
 					Elements elmStar5 = elmRatingTable
 							.getElementsByClass(REVIEW_5_STAR_RATING);
 					int star5Ratings = (null == elmStar5) ? 0 : elmStar5.size();
 					review.setWeight5Star(star5Ratings);
-					logger.debug("Total 5 star ratings:" + star5Ratings);
 				}
 			}
 
@@ -108,7 +108,7 @@ public class ReviewScraper {
 			if (!element.isEmpty()) {
 				review.setDealerRecommended(YES.equalsIgnoreCase(element.get(0).ownText()));
 			}
-
+			
 			reviews.add(review);
 		}
 
@@ -118,7 +118,7 @@ public class ReviewScraper {
 	public List<Review> getOffensiveReviews() {
 		List<Review> listReviews = getOverlyPositiveReviews();
 		if (null == listReviews) {
-			return null;
+			throw new ResourceNotFoundException("No Reviews Found");
 		}
 		// extract review with recommendation = no
 		List<Review> listNoRecom = listReviews.stream().filter((r -> !r.isDealerRecommended()))
@@ -138,6 +138,7 @@ public class ReviewScraper {
 		if (null != listNotStar5) {
 			listReviews.addAll(listNotStar5);
 		}
+		
 		return listReviews;
 	}
 	
@@ -149,7 +150,7 @@ public class ReviewScraper {
 	 */
 	public List<Review> sortOffensiveReviews(List<Review> listReviews) {
 		if (null == listReviews) {
-			return null;
+			throw new ResourceNotFoundException("No Reviews Found");
 		}
 		// extract review with recommendation = no
 		List<Review> notRecommended = listReviews.stream().filter(r -> !r.isDealerRecommended()).sorted(byRating).collect(Collectors.toList()); 

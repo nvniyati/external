@@ -16,6 +16,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -24,7 +26,7 @@ import nvn.external.scraper.reviews.model.ReviewScraper;
 
 @SpringBootTest
 class ReviewScraperControllerTest {
-	
+	Logger logger = LoggerFactory.getLogger(ReviewScraperControllerTest.class);
 	@Autowired
 	ReviewScraperController reviewScraperController;
 	
@@ -50,11 +52,27 @@ class ReviewScraperControllerTest {
 	@Test
 	@DisplayName("Test for overly positive reviews")
 	void testGetOverlyPositiveReviews() {
+		logger.info("******************************************");
+		logger.info("***** testGetOverlyPositiveReviews: Starting to scrape Overly Positive Reviews .... *****");
+		logger.info("******************************************");
 		reviewScraperController.setHTTPDoccReader((i)->simulateHttpDoc(i));
-		List<Review> listActualReview = reviewScraperController.getOverlyPositiveReviews(1);
-		assertNotNull(listActualReview, "Expected to return 10 elements");
-		assertTrue(listOverlyPostiveReviews.size() == listActualReview.size());
-		assertTrue(listActualReview.containsAll(listOverlyPostiveReviews));
+	
+		try {
+			List<Review> listActualReview = reviewScraperController.getOverlyPositiveReviews(1);
+			assertNotNull(listActualReview, "Expected to return 10 elements");
+			assertTrue(listOverlyPostiveReviews.size() == listActualReview.size());
+			logger.info("Expected Overly positive Reviews Count = " + listOverlyPostiveReviews.size() + ", Actual Review Size = " + listActualReview.size());
+			logger.info("Overly Positive Reviews List:");
+			for(Review r:listActualReview) {
+				logger.debug(r.toString());
+			}
+			assertTrue(listActualReview.containsAll(listOverlyPostiveReviews));
+			logger.info("***** testGetOverlyPositiveReviews: Done *****");
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("testGetOverlyPositiveReviews failed with IOException");
+		}
+		
 	}
 	
 	public Document simulateHttpDoc(int pageNo) throws IOException {
@@ -65,49 +83,112 @@ class ReviewScraperControllerTest {
 
 	@Test
 	void testGetOffensiveReviews() {
+		logger.info("******************************************");
+		logger.info("***** testGetOffensiveReviews: Starting to scrape Offensive Reviews .... *****");
+		logger.info("******************************************");
+		
 		reviewScraperController.setHTTPDoccReader((i)->simulateHttpDoc(i));
-		List<Review> listActualReview = reviewScraperController.getOffensiveReviews(1);
-		assertNotNull(listActualReview, "Expected to return 9 elements");
-		assertTrue(listOffensiveReviews.size() == listActualReview.size(), "Expected Size=" + listOffensiveReviews.size() + ", Actual Size = " + listActualReview.size() );
-		validateReview(listActualReview, listOffensiveReviews);
-		assertTrue(listActualReview.containsAll(listOffensiveReviews));
+		List<Review> listActualReview;
+		try {
+			listActualReview = reviewScraperController.getOffensiveReviews(1);
+			assertNotNull(listActualReview, "Expected to return 9 elements");
+			assertTrue(listOffensiveReviews.size() == listActualReview.size(), "Expected Size=" + listOffensiveReviews.size() + ", Actual Size = " + listActualReview.size() );
+			logger.info("Expected Offensive Reviews Count = " + listOffensiveReviews.size() + ", Actual Review Size = " + listActualReview.size());
+			logger.debug("Offensive Reviews List:");
+			for(Review r:listActualReview) {
+				logger.debug(r.toString());
+			}
+			assertTrue(listActualReview.containsAll(listOffensiveReviews));
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail(" testGetOffensiveReviews Failed with IOException");
+		}
+		logger.info("***** testGetOffensiveReviews: Done *****");
+		
+		
 	}
 
 	@Test
 	void testSortReviews() {
+		logger.info("******************************************");
+		logger.info("***** testSortReviews: Sorting Offensive Reviews .... *****");
+		logger.info("***** SORTING CRITERIA: Most Severe Offense = Recommended Dealer=NO (Dealer Recommended:FALSE) ****");
+		logger.info("SECONDLY, 5 Star Rating Weight: less the weight offense is severe. (weight = number of categories with 5 star rating )*****");
+		logger.info("******************************************");
 		reviewScraperController.setHTTPDoccReader((i)->simulateHttpDoc(i));
-		List<Review> listActualReview = reviewScraperController.sortReviews(1, 5);
-		assertNotNull(listActualReview, "Expected to return 9 elements");
-		assertTrue(listActualReview.size() == 5, "Expected Size= 5" + ", Actual Size = " + listActualReview.size());
-		assertTrue(listActualReview.containsAll(listSortedOffensive.subList(0, 5)));
-		System.out.println("Actual Sorted Offensive Reviews, top 5: ");
-		listActualReview.stream().forEach(System.out::println);
-		validateReview(listActualReview, listSortedOffensive.subList(0, 5));
 		
-		listActualReview = reviewScraperController.sortReviews(1, 2);
-		assertNotNull(listActualReview, "Expected to return 9 elements");
-		assertTrue(listActualReview.size() == 2, "Expected Size= 2" + ", Actual Size = " + listActualReview.size());
-		System.out.println("Actual Sorted Offensive Reviews, top 2: ");
-		listActualReview.stream().forEach(r->System.out.println(r.toString()));
-		assertTrue(listActualReview.containsAll(listSortedOffensive.subList(0, 2)));
-		validateReview(listActualReview, listSortedOffensive.subList(0, 2));
+		logger.info("--------------------------------------");
+		logger.info("Top 5 Offensive Reviews...");
+		logger.info("--------------------------------------");
+		List<Review> listActualReview;
+		try {
+			listActualReview = reviewScraperController.sortReviews(1, 5);
+			assertNotNull(listActualReview, "Expected to return 5 elements");
+			assertTrue(listActualReview.size() == 5, "Expected Size= 5" + ", Actual Size = " + listActualReview.size());
+			logger.info("Expected Top 5 offensive Reviews, Actual Review Size = " + listActualReview.size());
+			logger.debug("SORTED Offensive Reviews TOP 5 List:");
+			for(Review r:listActualReview) {
+				logger.debug(r.toString());
+			}
+			
+			assertTrue(listActualReview.containsAll(listSortedOffensive.subList(0, 5)));
+			logger.info("--------------------------------------");
+			logger.info("Top 2 Offensive Reviews...");
+			logger.info("--------------------------------------");
+			listActualReview = reviewScraperController.sortReviews(1, 2);
+			assertNotNull(listActualReview, "Expected to return 9 elements");
+			assertTrue(listActualReview.size() == 2, "Expected Size= 2" + ", Actual Size = " + listActualReview.size());
+			logger.info("Expected Top 2 offensive Reviews, Actual Review Size = " + listActualReview.size());
+			logger.debug("SORTED Offensive Reviews TOP 2 List:");
+			for(Review r:listActualReview) {
+				logger.debug(r.toString());
+			}
+			
+			assertTrue(listActualReview.containsAll(listSortedOffensive.subList(0, 2)));
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("testSortReviews failed for TOP 5 scenario");
+		}
 		
-		listActualReview = reviewScraperController.sortReviews(1, 20);
-		assertNotNull(listActualReview, "Expected to return 9 elements");
-		assertTrue(listActualReview.size() <= 20);
-		System.out.println("Actual Sorted Offensive Reviews, top 20: ");
-		listActualReview.stream().forEach(r->System.out.println(r.toString()));
-		validateReview(listActualReview, listSortedOffensive);
-		assertTrue(listActualReview.containsAll(listSortedOffensive));
+		logger.info("--------------------------------------");
+		logger.info("Top 20 Offensive Reviews, however there are ONLY 9 are available so should return 9 ...");
+		logger.info("--------------------------------------");
+		try {
+			listActualReview = reviewScraperController.sortReviews(1, 20);
+			assertNotNull(listActualReview, "Expected to return 9 elements");
+			assertTrue(listActualReview.size() <= 20);
+			logger.info("Expected Top <=20 offensive Reviews, Actual Review Size = " + listActualReview.size());
+			logger.debug("SORTED Offensive Reviews TOP <=20 List:");
+			for(Review r:listActualReview) {
+				logger.debug(r.toString());
+			}
+			
+			assertTrue(listActualReview.containsAll(listSortedOffensive));
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("testSortReviews failed for TOP 20 scenario");
+		}
+	
 		
+		logger.info("Top 0 Offensive Reviews...");
+		logger.info("--------------------------------------");
+		try {
+			listActualReview = reviewScraperController.sortReviews(1, 0);
+			assertNotNull(listActualReview, "Expected to return 9 elements");
+			assertTrue(listActualReview.size()==0);
+			logger.info("Expected Top 0 offensive Reviews, Actual Review Size = " + listActualReview.size());
+			logger.debug("SORTED Offensive Reviews TOP 0 List:");
+			if(listActualReview.size()==0)
+			{
+				logger.debug("EMPTY list FOUND");
+			}
+			assertTrue(listActualReview.isEmpty());
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("testSortReviews failed for TOP 0 scenario");
+		}
 		
-		listActualReview = reviewScraperController.sortReviews(1, 0);
-		assertNotNull(listActualReview, "Expected to return 9 elements");
-		assertTrue(listActualReview.size()==0);
-		System.out.println("Actual Sorted Offensive Reviews, top 0: ");
-		listActualReview.stream().forEach(r->System.out.println(r.toString()));
-		assertTrue(listActualReview.isEmpty());
-		
+		logger.info("***** testSortReviews: Done *****");
 	}
 
 	private static void setOverlyPositiveReviews() {
@@ -124,17 +205,6 @@ class ReviewScraperControllerTest {
 		addReview("- Watsonamy35", "June 01, 2021", "", false, 4);
 	}
 	
-	
-	private void validateReview(List<Review> actualList, List<Review> expectedList) {
-		for(Review r:actualList) {
-			if(expectedList.contains(r)) {
-				System.out.println("Found: " + r.getReviewer());
-			}else {
-				System.out.println("Not Found: " + r.getReviewer());
-				fail("Review Not Matched: " + r.getReviewer());
-			}
-		}
-	}
 	private void setOffensiveReviews() {
 		
 		listOffensiveReviews= listOverlyPostiveReviews.stream().filter(r->!r.isDealerRecommended()).collect(Collectors.toList());
