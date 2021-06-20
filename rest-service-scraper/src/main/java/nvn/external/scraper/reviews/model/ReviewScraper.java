@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import jdk.internal.org.jline.utils.Log;
+import nvn.external.scraper.exceptions.ResourceNotFoundException;
 
 /**
  * Scraper to extract overly rated reviews.
@@ -118,7 +118,7 @@ public class ReviewScraper {
 	public List<Review> getOffensiveReviews() {
 		List<Review> listReviews = getOverlyPositiveReviews();
 		if (null == listReviews) {
-			return null;
+			throw new ResourceNotFoundException("No Reviews Found");
 		}
 		// extract review with recommendation = no
 		List<Review> listNoRecom = listReviews.stream().filter((r -> !r.isDealerRecommended()))
@@ -150,7 +150,7 @@ public class ReviewScraper {
 	 */
 	public List<Review> sortOffensiveReviews(List<Review> listReviews) {
 		if (null == listReviews) {
-			return null;
+			throw new ResourceNotFoundException("No Reviews Found");
 		}
 		// extract review with recommendation = no
 		List<Review> notRecommended = listReviews.stream().filter(r -> !r.isDealerRecommended()).sorted(byRating).collect(Collectors.toList()); 

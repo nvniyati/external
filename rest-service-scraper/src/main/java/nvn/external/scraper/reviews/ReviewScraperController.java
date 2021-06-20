@@ -8,13 +8,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import nvn.external.scraper.exceptions.ResourceNotFoundException;
 import nvn.external.scraper.reviews.model.Review;
 import nvn.external.scraper.reviews.model.ReviewScraper;
 import nvn.external.scraper.reviews.model.ReviewsCriteria;
@@ -25,6 +23,7 @@ import nvn.external.scraper.reviews.model.ReviewsCriteria;
  *
  */
 @RestController
+
 public class ReviewScraperController {
 
 	@Value("${source.review.url}")
@@ -37,14 +36,15 @@ public class ReviewScraperController {
 	ReviewScraper reviewScraper;
 
 	ReadDcoument docReader = i -> getHttpDocument(i);
-	
-	@RequestMapping("/")
+
+	@RequestMapping("")
 	public String displayApplicationTitle() {
 		return "Welcome to Review Scraper";
 	}
 
 	@RequestMapping("/reviews/overlyPositive")
-	public List<Review> getOverlyPositiveReviews(@RequestParam(value = "pages", defaultValue = "5") int pages) {
+	public List<Review> getOverlyPositiveReviews(@RequestParam(value = "pages", defaultValue = "5") int pages)
+			throws IOException {
 		ReviewsCriteria funcAllPositiveReviews = reviewScraper.getOverlyPositive();
 		List<Review> listAllReviews = new ArrayList<>();
 		if (null != funcAllPositiveReviews) {
@@ -55,17 +55,14 @@ public class ReviewScraperController {
 	}
 
 	@RequestMapping("/reviews/offensive")
-	public List<Review> getOffensiveReviews(@RequestParam(value = "pages", defaultValue = "5") int pages) {
+	public List<Review> getOffensiveReviews(@RequestParam(value = "pages", defaultValue = "5") int pages)
+			throws IOException {
 		List<Review> listAllReviews = new ArrayList<>();
-		try {
-			ReviewsCriteria funcOffensiveReviews = reviewScraper.getOffensive();
 
-			if (null != funcOffensiveReviews) {
-				listAllReviews = getCriteriaReview(pages, funcOffensiveReviews);
-			}
+		ReviewsCriteria funcOffensiveReviews = reviewScraper.getOffensive();
 
-		} catch (Exception e) {
-
+		if (null != funcOffensiveReviews) {
+			listAllReviews = getCriteriaReview(pages, funcOffensiveReviews);
 		}
 
 		return listAllReviews;
@@ -73,7 +70,7 @@ public class ReviewScraperController {
 
 	@RequestMapping("/reviews/offensive/sort")
 	public List<Review> sortReviews(@RequestParam(value = "pages", defaultValue = "5") int pages,
-			@RequestParam(value = "topCount", defaultValue = "3") int topCount) {
+			@RequestParam(value = "topCount", defaultValue = "3") int topCount) throws IOException {
 
 		// get all offensive reviews
 		List<Review> listOffensiveReviews = getOffensiveReviews(pages);
@@ -89,23 +86,20 @@ public class ReviewScraperController {
 				: listOffensiveReviews;
 	}
 
-	private List<Review> getCriteriaReview(int countPages, ReviewsCriteria funcCriteria) {
+	private List<Review> getCriteriaReview(int countPages, ReviewsCriteria funcCriteria) throws IOException {
 		List<Review> listAllReviews = new ArrayList<>();
 		for (int pageNo = 1; pageNo <= countPages; pageNo++) {
-			try {
-				Document doc = docReader.getDocument(pageNo);
-				if (null == doc) {
-					continue;
-				}
-				reviewScraper.setHtmlDocument(doc);
-				List<Review> listReviews = funcCriteria.runCriteria();
-				if (null != listReviews) {
-					listAllReviews.addAll(listReviews);
-				}
-			} catch (IOException e) {
 
-				e.printStackTrace();
+			Document doc = docReader.getDocument(pageNo);
+			if (null == doc) {
+				continue;
 			}
+			reviewScraper.setHtmlDocument(doc);
+			List<Review> listReviews = funcCriteria.runCriteria();
+			if (null != listReviews) {
+				listAllReviews.addAll(listReviews);
+			}
+
 		}
 		return listAllReviews;
 	}
@@ -113,13 +107,9 @@ public class ReviewScraperController {
 	public void setHTTPDoccReader(ReadDcoument funcDocReader) {
 		this.docReader = funcDocReader;
 	}
+
 	private Document getHttpDocument(int pageNo) throws IOException {
 		String url = String.format(SOURCE_URL, pageNo);
 		return Jsoup.connect(url).get();
-	}
-	
-	@ExceptionHandler(RuntimeException.class)
-	public final ResponseEntity<Exception> handleAllExceptions(RuntimeException ex) {
-		return new ResponseEntity<Exception>(ex, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 }
