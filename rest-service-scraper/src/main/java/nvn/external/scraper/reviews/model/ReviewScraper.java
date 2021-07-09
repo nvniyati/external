@@ -43,7 +43,7 @@ public class ReviewScraper {
 	@Value("${review.class.recommenddealer:td small-text boldest}")
 	private String REVIEW_RECOMMEND_DEALER_CLASS;
 	
-	@Value("${review.class.ratingtable:rating-static-indv rating-50 margin-top-none td}")
+	@Value("${review.class.ratingtable:table width-100 pad-left-none pad-right-none margin-bottom-md}")
 	private String REVIEW_RATING_TABLE_CLASS;
 	
 	@Value("${review.class.ratingtable.star.5:rating-static-indv rating-50 margin-top-none td}")
